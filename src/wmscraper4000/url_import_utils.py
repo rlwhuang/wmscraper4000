@@ -24,6 +24,9 @@ def preprocess_urls_from_json_file(file_path: str) -> list:
         if not parsed_url.scheme.startswith("http"):
             raise ValueError(f"URL must start with http or https: {entry['url']}")
     
+    # print the number of URLs in the file
+    print(f"Number of URLs in the file: {len(data)}")
+
     # check for database file existence and create if not exists. The database file is in the same directory as the JSON file
     db_path = file_path.rsplit('.', 1)[0] + '.db'    
     conn = sqlite3.connect(db_path)
@@ -54,7 +57,10 @@ def preprocess_urls_from_json_file(file_path: str) -> list:
     # get a list of rows that have cdx_data as NULL
     cursor.execute("SELECT id, url FROM urls WHERE cdx_data IS NULL;")
     rows = cursor.fetchall()
-    
+
+    # print the number of rows that need cdx_data
+    print(f"Number of rows that need cdx_data: {len(rows)}")
+
     # for each row, get the cdx_data and update the row
     for row in rows:
         id, url = row
