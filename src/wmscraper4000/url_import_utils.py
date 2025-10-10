@@ -3,7 +3,7 @@ import json
 import sqlite3
 from urllib.parse import urlparse
 from pathlib import Path
-from wm_cdx_utils import get_cdx_records
+from .wm_cdx_utils import get_cdx_records
 
 def preprocess_urls_from_json_file(file_path: str) -> list:
     with open(file_path, 'r') as file:
