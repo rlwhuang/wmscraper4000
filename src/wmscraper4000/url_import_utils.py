@@ -64,5 +64,3 @@ def preprocess_urls_from_json_file(file_path: str) -> list:
     
     # close the connection
     conn.close()
-    
-    

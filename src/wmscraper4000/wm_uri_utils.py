@@ -23,7 +23,6 @@ def dissect_wm_memento_uri(uri_m: str) -> dict:
     # - The uri-r can contain http, https, or no scheme (e.g., example.com)
     # - The original resource URI can contain query parameters and fragments
     # - The rewrite modifier can be any two characters followed by an underscore
-    # - 
 
     pattern = re.compile(
         r"^https?://web\.archive\.org/web/(?P<timestamp>\d{1,14})(?P<rewrite_modifier>[a-zA-Z0-9]{2}_)?/(?P<uri_r>.+)$"

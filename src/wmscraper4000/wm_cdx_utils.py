@@ -20,7 +20,7 @@ def get_cdx_records(original_url: str, from_date: str = None, to_date: str = Non
     response = requests.get(base, params=params)
     if response.status_code == 403:
         print("Access forbidden due to the URL being excluded from the Wayback Machine.")
-        return "[]"
+        return '[{"error": 403}]'
     response.raise_for_status()
 
     # convert the response to a list of dictionaries
