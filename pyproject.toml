@@ -7,7 +7,10 @@ name = "wmscraper4000"
 version = "0.1.0"
 description = "A Python package for web scraping"
 authors = [{name = "RLH"}]
-dependencies = []
+dependencies = [
+    "requests",
+    "wayback"
+]
 requires-python = ">=3.8"
 
 [tool.setuptools.packages.find]
