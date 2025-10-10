@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 from pathlib import Path
 from .wm_cdx_utils import get_cdx_records
 
-def preprocess_urls_from_json_file(file_path: str) -> list:
+def preprocess_urls_from_json_file(file_path: str, cdx_params: dict) -> list:
     with open(file_path, 'r') as file:
         data = json.load(file)
     
@@ -64,7 +64,7 @@ def preprocess_urls_from_json_file(file_path: str) -> list:
     # for each row, get the cdx_data and update the row
     for row in rows:
         id, url = row
-        cdx_data = get_cdx_records(url)
+        cdx_data = get_cdx_records(url, **cdx_params)
         cursor.execute("UPDATE urls SET cdx_data = ? WHERE id = ?;", (json.dumps(cdx_data), id))
         conn.commit()
     
