@@ -1,8 +1,9 @@
 import requests
 from urllib.parse import quote
 import time
+import json
 
-def get_cdx_records(original_url: str, from_date: str = None, to_date: str = None, filter: str = None, sleep: float = 1.5) -> list:
+def get_cdx_records(original_url: str, from_date: str = None, to_date: str = None, filter: str = None, sleep: float = 1.5, return_json_string: bool = False) -> list:
     base = "https://web.archive.org/cdx/search/cdx"
     params = {
         "url": original_url,
@@ -17,6 +18,9 @@ def get_cdx_records(original_url: str, from_date: str = None, to_date: str = Non
     # request the CDX records from the server
     time.sleep(sleep)  # be polite and avoid hammering the server
     response = requests.get(base, params=params)
+    if response.status_code == 403:
+        print("Access forbidden due to the URL being excluded from the Wayback Machine.")
+        return "[]"
     response.raise_for_status()
 
     # convert the response to a list of dictionaries
@@ -34,6 +38,8 @@ def get_cdx_records(original_url: str, from_date: str = None, to_date: str = Non
         }
         records.append(record)
     
+    if return_json_string:
+        return json.dumps(records, indent=2, ensure_ascii=False)
     return records
 
 if __name__ == "__main__":
