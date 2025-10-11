@@ -4,8 +4,36 @@ import sqlite3
 from urllib.parse import urlparse
 from pathlib import Path
 from .wm_cdx_utils import get_cdx_records
+from .list_of_valid_tlds import list_of_valid_tlds
 
-def preprocess_urls_from_json_file(file_path: str, cdx_params: dict) -> list:
+def original_url_validator(url: str) -> bool:
+    # parse the url and check if it has a valid scheme and netloc
+    try:
+        result = urlparse(url)
+    except ValueError:
+        return False
+    
+    # check if the URL contains any spaces
+    if ' ' in url:
+        return False
+    
+    # check if the tld of the URL is valid
+    tld = result.hostname.split('.')[-1]
+    if not (tld in list_of_valid_tlds):
+        return False
+    
+    # check if more than one instances of "//" exists in the URL
+    if url.count("//") > 1:
+        return False
+    
+    # check if the URL contains any of the following characters: <, >, {, }, |, \, ^, ~, [, ], `
+    invalid_chars = set('<>{}|\\^~[]`')
+    if any(char in invalid_chars for char in url):
+        return False
+
+    return True
+
+def preprocess_urls_from_json_file(file_path: str, cdx_params: dict, bypass_url_validation: bool = False):
     with open(file_path, 'r') as file:
         data = json.load(file)
     
@@ -14,16 +42,18 @@ def preprocess_urls_from_json_file(file_path: str, cdx_params: dict) -> list:
         # check first if the three necessary keys are present
         if not all(key in entry for key in ("url", "title", "description")):
             raise ValueError("Each entry must contain 'url', 'title', and 'description' keys.")
-        
-        # check if all URLs are valid URLs
-        parsed_url = urlparse(entry["url"])
-        if not all([parsed_url.scheme, parsed_url.netloc]):
-            raise ValueError(f"Invalid URL found: {entry['url']}")
-        
-        # check if all URLs start from http (there should be no other protocols)
-        if not parsed_url.scheme.startswith("http"):
-            raise ValueError(f"URL must start with http or https: {entry['url']}")
-    
+
+    if not bypass_url_validation:
+        urls_failing_validation = [entry["url"] for entry in data if not original_url_validator(entry["url"])]
+        if urls_failing_validation:
+            print("The following URLs failed validation:")
+            for url in urls_failing_validation:
+                print(url)
+        raise ValueError("One or more URLs failed validation. Please correct them and try again.")
+
+    # If we reach this point, all URLs are valid
+    print("URL validation passed.")
+
     # print the number of URLs in the file
     print(f"Number of URLs in the file: {len(data)}")
 
