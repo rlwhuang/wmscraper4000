@@ -41,6 +41,7 @@ def preprocess_urls_from_json_file(file_path: str, cdx_params: dict) -> list:
                 url TEXT NOT NULL,
                 title TEXT,
                 description TEXT,
+                category TEXT,
                 page_number INTEGER DEFAULT 0,
                 cdx_data TEXT
             );
@@ -49,9 +50,9 @@ def preprocess_urls_from_json_file(file_path: str, cdx_params: dict) -> list:
         # insert the data into the table
         for entry in data:
             cursor.execute('''
-                INSERT INTO urls (url, title, description)
-                VALUES (?, ?, ?);
-            ''', (entry["url"], entry["title"], entry["description"]))
+                INSERT INTO urls (url, title, description, category, page_number)
+                VALUES (?, ?, ?, ?, ?);
+            ''', (entry["url"], entry["title"], entry["description"], entry["category"], entry.get("page_number", 0)))
             conn.commit()
     
     # get a list of rows that have cdx_data as NULL
