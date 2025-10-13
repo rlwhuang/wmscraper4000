@@ -1,10 +1,12 @@
 import requests
 import json
 import sqlite3
-from urllib.parse import urlparse
+from urllib.parse import urlparse, quote
 from pathlib import Path
 from .wm_cdx_utils import get_cdx_records
 from .list_of_valid_tlds import list_of_valid_tlds
+import requests
+
 
 def original_url_validator(url: str) -> bool:
     # parse the url and check if it has a valid scheme and netloc
@@ -31,6 +33,16 @@ def original_url_validator(url: str) -> bool:
     if any(char in invalid_chars for char in url):
         return False
 
+    return True
+
+def check_if_url_already_in_db(url: str) -> bool:
+    url = quote(url, safe='')
+    base_pastinternet_url = "http://localhost:8000/redirect/"
+    check_url = f"{base_pastinternet_url}{url}"
+    response = requests.head(check_url)
+    if response.status_code == 404:
+        return False
+    response.raise_for_status()
     return True
 
 def preprocess_urls_from_json_file(file_path: str, cdx_params: dict, bypass_url_validation: bool = False):
@@ -95,7 +107,11 @@ def preprocess_urls_from_json_file(file_path: str, cdx_params: dict, bypass_url_
     # for each row, get the cdx_data and update the row
     for row in rows:
         id, url = row
-        cdx_data = get_cdx_records(url, **cdx_params)
+        url_in_db = check_if_url_already_in_db(url)
+        if url_in_db:
+            cdx_data = [{"note": "skip, already in database"}]
+        else:
+            cdx_data = get_cdx_records(url, **cdx_params)
         cursor.execute("UPDATE urls SET cdx_data = ? WHERE id = ?;", (json.dumps(cdx_data), id))
         conn.commit()
     
