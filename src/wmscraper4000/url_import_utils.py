@@ -17,6 +17,9 @@ class URLImporter:
     def __enter__(self):
         self.client = MongoClient(self.mongo_uri)
         self.collection = self.client[self.database_name][self.collection_name]
+        print("Connected to MongoDB")
+        # print the number of documents in the collection
+        print(f"Number of documents in collection '{self.collection_name}': {self.collection.count_documents({})}")
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
