@@ -32,7 +32,7 @@ def original_url_validator(url: str) -> bool:
         return False
     
     # check if the URL contains any of the following characters: <, >, {, }, |, \, ^, ~, [, ], `
-    invalid_chars = set('<>{}|\\^~[]`')
+    invalid_chars = set('<>{}|\\^[]`')
     if any(char in invalid_chars for char in url):
         return False
     
