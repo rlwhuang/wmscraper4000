@@ -25,9 +25,6 @@ class URLImporter:
     
     def add_url(self, url, lot_id, site_title, site_desc="", lot_path="", lot_path_code="", page_number=""):
         """Add a URL to the database."""
-        # clean url before import
-        url = url.rstrip('/')
-        url = url.rstrip('.')
         netloc = urlparse(url).netloc
         url = url.replace(netloc, netloc.lower())
 

@@ -9,7 +9,8 @@ description = "A Python package for web scraping"
 authors = [{name = "RLH"}]
 dependencies = [
     "requests",
-    "wayback"
+    "wayback",
+    "pymongo"
 ]
 requires-python = ">=3.8"
 
