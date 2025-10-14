@@ -101,8 +101,16 @@ class URLImporter:
             print("Snapshots already exist for URL: " + url)
 
     def get_unique_url_snapshots(self, url: str, from_date: int = 19960101000000, to_date: int = 20051231000000, status_code_filter: list = [200]) -> dict:
-        if len(str(from_date)) != 14 or len(str(to_date)) != 14:
+        from_date = str(from_date)
+        to_date = str(to_date)
+        if len(from_date) != 14 or len(to_date) != 14:
             raise ValueError("from_date and to_date must be in YYYYMMDDhhmmss format")
+        
+        # ensure status_code_filter is a list of integers
+        if not all(isinstance(code, int) for code in status_code_filter):
+            raise ValueError("status_code_filter must be a list of integers")
+
+        # get all snapshots for the url from the database
         snapshots = self.snapshot_collection.find_one({"url": url})
         # get urlkey from the first snapshot
         if snapshots is not None:
