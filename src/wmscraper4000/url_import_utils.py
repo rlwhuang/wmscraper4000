@@ -133,15 +133,18 @@ class URLImporter:
             raise ValueError("No snapshots found for URL: " + url)
         
     def download_unique_id_snapshots(self, url, from_date, to_date) -> list:
-        wayback_client = self.wayback_client
         unique_snapshots = self.get_unique_url_snapshots(url, from_date, to_date)
+        urlkey = unique_snapshots["urlkey"]
+        unique_snapshots = unique_snapshots["digest_to_snapshot"]
         downloaded_snapshots = []
         for digest, timestamps in unique_snapshots.items():
             # for each digest, we only need to download one snapshot. We will download the first timestamp in the list.
             timestamp = timestamps[0]
             try:
-                snapshot_data = wayback_client.get_snapshot(url, timestamp)
+                snapshot_data = self.wayback_client.get_memento(url, timestamp)
                 downloaded_snapshots.append({
+                    "urlkey": urlkey,
+                    "url": url,
                     "digest": digest,
                     "timestamps": timestamps,
                     "data": snapshot_data
