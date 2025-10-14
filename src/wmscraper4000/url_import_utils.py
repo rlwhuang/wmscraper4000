@@ -3,6 +3,7 @@
 
 from pymongo import MongoClient
 from urllib.parse import urlparse
+import wayback
 
 class URLImporter:
     """Context manager for URL importing with reusable MongoDB connection."""
@@ -24,6 +25,7 @@ class URLImporter:
         # print the number of documents in the collection
         print(f"Number of documents in collection '{self.collection_name}': {self.collection.count_documents({})}")
         print(f"Number of documents in collection '{self.snapshot_collection_name}': {self.snapshot_collection.count_documents({})}")
+        wayback_client = wayback.WaybackClient()
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -96,3 +98,43 @@ class URLImporter:
             print("Force updated snapshots for URL: " + url)
         else:
             print("Snapshots already exist for URL: " + url)
+
+    def get_unique_url_snapshots(self, url, from_date, to_date):
+        snapshots = self.snapshot_collection.find_one({"url": url})
+        if snapshots is not None:
+            # Filter snapshots by date range
+            filtered_snapshots = [
+                snapshot for snapshot in snapshots.get("wayback_cdx", [])
+                if from_date <= snapshot.get("timestamp", "") <= to_date
+            ]
+            
+            # build a dictionary of digest keys to snapshots
+            # format: digest_key: [snapshot_timestamp1, snapshot_timestamp2, ...]
+            digest_to_snapshot = {}
+            for snapshot in filtered_snapshots:
+                digest_key = snapshot.get("digest", "")
+                if digest_key:
+                    if digest_key not in digest_to_snapshot:
+                        digest_to_snapshot[digest_key] = []
+                    digest_to_snapshot[digest_key].append(snapshot["timestamp"])
+            return digest_to_snapshot
+        else:
+            raise ValueError("No snapshots found for URL: " + url)
+        
+    def download_unique_id_snapshots(self, url, from_date, to_date) -> list:
+        wayback_client = self.wayback_client
+        unique_snapshots = self.get_unique_url_snapshots(url, from_date, to_date)
+        downloaded_snapshots = []
+        for digest, timestamps in unique_snapshots.items():
+            # for each digest, we only need to download one snapshot. We will download the first timestamp in the list.
+            timestamp = timestamps[0]
+            try:
+                snapshot_data = wayback_client.get_snapshot(url, timestamp)
+                downloaded_snapshots.append({
+                    "digest": digest,
+                    "timestamps": timestamps,
+                    "data": snapshot_data
+                })
+            except Exception as e:
+                print(f"Error downloading snapshot for URL: {url} at timestamp: {timestamp}. Error: {e}")
+        return downloaded_snapshots
