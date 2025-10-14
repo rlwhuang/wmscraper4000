@@ -16,6 +16,7 @@ class URLImporter:
         self.client = None
         self.collection = None
         self.snapshot_collection = None
+        self.wayback_client = None
     
     def __enter__(self):
         self.client = MongoClient(self.mongo_uri)
@@ -25,7 +26,7 @@ class URLImporter:
         # print the number of documents in the collection
         print(f"Number of documents in collection '{self.collection_name}': {self.collection.count_documents({})}")
         print(f"Number of documents in collection '{self.snapshot_collection_name}': {self.snapshot_collection.count_documents({})}")
-        wayback_client = wayback.WaybackClient()
+        self.wayback_client = wayback.WaybackClient()
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
