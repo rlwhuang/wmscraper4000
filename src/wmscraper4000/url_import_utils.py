@@ -100,12 +100,18 @@ class URLImporter:
             print("Snapshots already exist for URL: " + url)
 
     def get_unique_url_snapshots(self, url: str, from_date: int = 19960101000000, to_date: int = 20051231000000, status_code_filter: list = [200]) -> dict:
+        if len(from_date) != 14 or len(to_date) != 14:
+            raise ValueError("from_date and to_date must be in YYYYMMDDhhmmss format")
         snapshots = self.snapshot_collection.find_one({"url": url})
+        # get urlkey from the first snapshot
         if snapshots is not None:
+            urlkey = snapshots.get("wayback_cdx", [])[0].get("urlkey", "") if snapshots else ""
+            if not urlkey:
+                raise ValueError("No urlkey found for URL: " + url)
             # Filter snapshots by date range
             filtered_snapshots = [
                 snapshot for snapshot in snapshots.get("wayback_cdx", [])
-                if from_date <= snapshot.get("timestamp", "") <= to_date and int(int(snapshot.get("statuscode", 0))) in status_code_filter
+                if from_date <= snapshot.get("timestamp", "") <= to_date and int(snapshot.get("statuscode", 0)) in status_code_filter
             ]
             
             # build a dictionary of digest keys to snapshots
@@ -117,7 +123,11 @@ class URLImporter:
                     if digest_key not in digest_to_snapshot:
                         digest_to_snapshot[digest_key] = []
                     digest_to_snapshot[digest_key].append(snapshot["timestamp"])
-            return digest_to_snapshot
+            return {
+                "url": url,
+                "urlkey": urlkey,
+                "digest_to_snapshot": digest_to_snapshot
+            }
         else:
             raise ValueError("No snapshots found for URL: " + url)
         
