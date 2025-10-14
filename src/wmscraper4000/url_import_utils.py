@@ -99,13 +99,13 @@ class URLImporter:
         else:
             print("Snapshots already exist for URL: " + url)
 
-    def get_unique_url_snapshots(self, url, from_date, to_date):
+    def get_unique_url_snapshots(self, url: str, from_date: int = 19960101000000, to_date: int = 20051231000000, status_code_filter: list = [200]) -> dict:
         snapshots = self.snapshot_collection.find_one({"url": url})
         if snapshots is not None:
             # Filter snapshots by date range
             filtered_snapshots = [
                 snapshot for snapshot in snapshots.get("wayback_cdx", [])
-                if from_date <= snapshot.get("timestamp", "") <= to_date
+                if from_date <= snapshot.get("timestamp", "") <= to_date and int(int(snapshot.get("statuscode", 0))) in status_code_filter
             ]
             
             # build a dictionary of digest keys to snapshots
