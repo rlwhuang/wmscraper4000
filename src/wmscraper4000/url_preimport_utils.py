@@ -42,9 +42,8 @@ def original_url_validator(url: str) -> bool:
 
     return True
 
-def check_if_url_already_in_db(url: str) -> bool:
+def check_if_url_already_in_db(url: str, base_pastinternet_url: str = "http://localhost:8000/redirect/") -> bool:
     url = quote(url, safe='')
-    base_pastinternet_url = "http://localhost:8000/redirect/"
     check_url = f"{base_pastinternet_url}{url}"
     response = requests.head(check_url)
     if response.status_code == 404:
