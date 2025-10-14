@@ -101,9 +101,7 @@ class URLImporter:
             print("Snapshots already exist for URL: " + url)
 
     def get_unique_url_snapshots(self, url: str, from_date: int = 19960101000000, to_date: int = 20051231000000, status_code_filter: list = [200]) -> dict:
-        from_date = str(from_date)
-        to_date = str(to_date)
-        if len(from_date) != 14 or len(to_date) != 14:
+        if len(str(from_date)) != 14 or len(str(to_date)) != 14:
             raise ValueError("from_date and to_date must be in YYYYMMDDhhmmss format")
         
         # ensure status_code_filter is a list of integers
@@ -149,7 +147,7 @@ class URLImporter:
             # for each digest, we only need to download one snapshot. We will download the first timestamp in the list.
             timestamp = timestamps[0]
             try:
-                snapshot_data = self.wayback_client.get_memento(url, timestamp)
+                snapshot_data = self.wayback_client.get_memento(url, str(timestamp))
                 downloaded_snapshots.append({
                     "urlkey": urlkey,
                     "url": url,
