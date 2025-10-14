@@ -7,19 +7,23 @@ from urllib.parse import urlparse
 class URLImporter:
     """Context manager for URL importing with reusable MongoDB connection."""
     
-    def __init__(self, mongo_uri, database_name="xm", collection_name="urls_international"):
+    def __init__(self, mongo_uri, database_name="xm", collection_name="urls_international", snapshot_collection_name="url_snapshots"):
         self.mongo_uri = mongo_uri
         self.database_name = database_name
         self.collection_name = collection_name
+        self.snapshot_collection_name = snapshot_collection_name
         self.client = None
         self.collection = None
+        self.snapshot_collection = None
     
     def __enter__(self):
         self.client = MongoClient(self.mongo_uri)
         self.collection = self.client[self.database_name][self.collection_name]
+        self.snapshot_collection = self.client[self.database_name][self.snapshot_collection_name]
         print("Connected to MongoDB")
         # print the number of documents in the collection
         print(f"Number of documents in collection '{self.collection_name}': {self.collection.count_documents({})}")
+        print(f"Number of documents in collection '{self.snapshot_collection_name}': {self.snapshot_collection.count_documents({})}")
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -65,3 +69,30 @@ class URLImporter:
             else: 
                 self.collection.update_one({"url": url}, {"$push": {"in_lots": lot_info}})
                 print("Updated URL: " + url)
+
+    def add_url_snapshots(url, snapshots: list, force_update=False):
+        """Add snapshots to an existing URL in the database."""
+        
+        print("Adding snapshots to URL: " + url)
+
+        # verify if each element in snapshots is a dictionary with keys 'urlkey', 'timestamp', 'original', 'mimetype', 'statuscode', 'digest', 'length'
+        for snapshot in snapshots:
+            if not isinstance(snapshot, dict):
+                raise ValueError("Each snapshot must be a dictionary")
+            required_keys = ['urlkey', 'timestamp', 'original', 'mimetype', 'statuscode', 'digest', 'length']
+            for key in required_keys:
+                if key not in snapshot:
+                    raise ValueError(f"Snapshot is missing required key: {key}")
+
+        query = self.snapshot_collection.find_one({"url": url})
+        if query is None:
+            self.snapshot_collection.insert_one({
+                "url": url,
+                "wayback_cdx": snapshots,
+            })
+            print("Added snapshots to URL: " + url)
+        elif force_update:
+            self.snapshot_collection.update_one({"url": url}, {"$set": {"wayback_cdx": snapshots}})
+            print("Force updated snapshots for URL: " + url)
+        else:
+            print("Snapshots already exist for URL: " + url)
