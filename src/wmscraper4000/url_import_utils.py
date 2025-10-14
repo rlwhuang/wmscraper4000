@@ -70,7 +70,7 @@ class URLImporter:
                 self.collection.update_one({"url": url}, {"$push": {"in_lots": lot_info}})
                 print("Updated URL: " + url)
 
-    def add_url_snapshots(url: str, snapshots: list, force_update: bool = False):
+    def add_url_snapshots(url, snapshots, force_update = False):
         """Add snapshots to an existing URL in the database."""
         
         print("Adding snapshots to URL: " + url)
