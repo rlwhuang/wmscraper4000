@@ -13,7 +13,7 @@ def download_archived_snapshot(original_url, timestamp, rewrite_modifier="id_", 
     original_url = quote(original_url, safe="")
     snapshot_url = f"https://web.archive.org/web/{timestamp}{rewrite_modifier}/{original_url}"
     print(f"Fetching archived snapshot for: {snapshot_url}")
-    response = requests.get(snapshot_url, allow_redirects=True, stream=True)
+    response = requests.get(snapshot_url, allow_redirects=True)
     print(f"Received response with status code: {response.status_code}")
     time.sleep(sleep)
 
