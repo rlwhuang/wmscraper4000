@@ -104,6 +104,9 @@ class URLImporter:
         # ensure status_code_filter is a list of integers
         if not all(isinstance(code, int) for code in status_code_filter):
             raise ValueError("status_code_filter must be a list of integers")
+        
+        # make status_code_filter a list of strings for comparison
+        status_code_filter = [str(code) for code in status_code_filter]
 
         # get all snapshots for the url from the database
         snapshots = self.snapshot_collection.find_one({"url": url})
@@ -113,10 +116,9 @@ class URLImporter:
             if not urlkey:
                 raise ValueError("No urlkey found for URL: " + url)
             # Filter snapshots by date range
-            filtered_snapshots = [snapshot for snapshot in snapshots.get("wayback_cdx", []) if snapshot.get("timestamp").isnumeric()]
             filtered_snapshots = [
-                snapshot for snapshot in filtered_snapshots
-                if from_date <= snapshot.get("timestamp", "") <= to_date and int(snapshot.get("statuscode", 0)) in status_code_filter
+                snapshot for snapshot in snapshots.get("wayback_cdx", [])
+                if from_date <= snapshot.get("timestamp", "") <= to_date and str(snapshot.get("statuscode", 0)) in status_code_filter
             ]
             
             # build a dictionary of digest keys to snapshots
