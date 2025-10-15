@@ -3,7 +3,6 @@
 
 from pymongo import MongoClient
 from urllib.parse import urlparse
-import wayback
 
 class URLImporter:
     """Context manager for URL importing with reusable MongoDB connection."""
@@ -16,7 +15,6 @@ class URLImporter:
         self.client = None
         self.collection = None
         self.snapshot_collection = None
-        self.wayback_client = None
     
     def __enter__(self):
         self.client = MongoClient(self.mongo_uri)
@@ -26,7 +24,6 @@ class URLImporter:
         # print the number of documents in the collection
         print(f"Number of documents in collection '{self.collection_name}': {self.collection.count_documents({})}")
         print(f"Number of documents in collection '{self.snapshot_collection_name}': {self.snapshot_collection.count_documents({})}")
-        self.wayback_client = wayback.WaybackClient()
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -137,24 +134,3 @@ class URLImporter:
             }
         else:
             raise ValueError("No snapshots found for URL: " + url)
-        
-    def download_unique_id_snapshots(self, url, from_date, to_date) -> list:
-        unique_snapshots = self.get_unique_url_snapshots(url, from_date, to_date)
-        urlkey = unique_snapshots["urlkey"]
-        unique_snapshots = unique_snapshots["digest_to_snapshot"]
-        downloaded_snapshots = []
-        for digest, timestamps in unique_snapshots.items():
-            # for each digest, we only need to download one snapshot. We will download the first timestamp in the list.
-            timestamp = timestamps[0]
-            try:
-                snapshot_data = self.wayback_client.get_memento(url, str(timestamp))
-                downloaded_snapshots.append({
-                    "urlkey": urlkey,
-                    "url": url,
-                    "digest": digest,
-                    "timestamps": timestamps,
-                    "data": snapshot_data
-                })
-            except Exception as e:
-                print(f"Error downloading snapshot for URL: {url} at timestamp: {timestamp}. Error: {e}")
-        return downloaded_snapshots
