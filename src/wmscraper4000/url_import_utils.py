@@ -113,8 +113,9 @@ class URLImporter:
             if not urlkey:
                 raise ValueError("No urlkey found for URL: " + url)
             # Filter snapshots by date range
+            filtered_snapshots = [snapshot for snapshot in snapshots.get("wayback_cdx", []) if snapshot.get("timestamp").isnumeric()]
             filtered_snapshots = [
-                snapshot for snapshot in snapshots.get("wayback_cdx", [])
+                snapshot for snapshot in filtered_snapshots
                 if from_date <= snapshot.get("timestamp", "") <= to_date and int(snapshot.get("statuscode", 0)) in status_code_filter
             ]
             
