@@ -1,5 +1,5 @@
 from .wm_uri_utils import dissect_wm_memento_uri, create_wm_memento_uri
 from .wm_cdx_utils import get_cdx_records
-from .url_preimport_utils import preprocess_urls_from_json_file
+from .url_preimport_utils import preprocess_urls_from_json_file, preprocess_urls_from_csv_file
 from .url_import_utils import URLImporter
 from .url_download_utils import download_archived_snapshot
