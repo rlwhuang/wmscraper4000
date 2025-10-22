@@ -124,3 +124,77 @@ def preprocess_urls_from_json_file(file_path: str, cdx_params: dict, bypass_url_
     
     finally:
         conn.close()
+
+
+def preprocess_urls_from_csv_file(file_path: str, cdx_params: dict, bypass_url_validation: bool = False):
+    import pandas as pd
+
+    df = pd.read_csv(file_path)
+
+    # data validation checks
+    required_columns = {"url", "title", "description"}
+    if not required_columns.issubset(df.columns):
+        raise ValueError(f"The CSV file must contain the following columns: {required_columns}")
+
+    if not bypass_url_validation:
+        urls_failing_validation = df[~df['url'].apply(original_url_validator)]['url'].tolist()
+        if urls_failing_validation:
+            print("The following URLs failed validation:")
+            for url in urls_failing_validation:
+                print(url)
+            raise ValueError("One or more URLs failed validation. Please correct them and try again.")
+
+    # If we reach this point, all URLs are valid
+    print("URL validation passed.")
+
+    # print the number of URLs in the file
+    print(f"Number of URLs in the file: {len(df)}")
+
+    # check for database file existence and create if not exists. The database file is in the same directory as the CSV file
+    db_path = file_path.rsplit('.', 1)[0] + '.db'    
+    conn = sqlite3.connect(db_path)
+    try:
+        cursor = conn.cursor()
+        
+        # if the table does not exist, create it
+        # The table will have columns for url, title, description, page_number, cdx_data
+        if not cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?;", ('urls',)).fetchone():
+            cursor.execute('''
+                CREATE TABLE urls (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    url TEXT NOT NULL,
+                    title TEXT,
+                    description TEXT,
+                    category TEXT,
+                    page_number INTEGER DEFAULT 0,
+                    cdx_data TEXT
+                );
+            ''')
+
+            # insert the data into the table
+            for _, row in df.iterrows():
+                cursor.execute('''
+                    INSERT INTO urls (url, title, description, category, page_number)
+                    VALUES (?, ?, ?, ?, ?);
+                ''', (row["url"], row["title"], row["description"], row["category"], row.get("page_number", 0)))
+                conn.commit()
+        
+        # get a list of rows that have cdx_data as NULL
+        cursor.execute("SELECT id, url FROM urls WHERE cdx_data IS NULL;")
+        rows = cursor.fetchall()
+
+        # print the number of rows that need cdx_data
+        print(f"Number of rows that need cdx_data: {len(rows)}")
+
+        # for each row, get the cdx_data and update the row
+        for row in rows:
+            id, url = row
+            url_in_db = check_if_url_already_in_db(url)
+            if url_in_db:
+                cdx_data = [{"note": "skip, already in database"}]
+            else:
+                cdx_data = get_cdx_records(url, **cdx_params)
+            cursor.execute("UPDATE urls SET cdx_data = ? WHERE id = ?;", (json.dumps(cdx_data), id))
+            conn.commit()
+    finally:
+        conn.close()
