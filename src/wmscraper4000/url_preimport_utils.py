@@ -17,7 +17,15 @@ def original_url_validator(url: str) -> bool:
     # Add check for missing hostname
     if not result.hostname:
         return False
-    
+
+    # If the hostname is an IP address, skip TLD check
+    try:
+        parts = result.hostname.split('.')
+        if all(0 <= int(part) < 256 for part in parts):
+            return True
+    except ValueError:
+        pass
+
     # Check if the tld of the URL is valid
     hostname_parts = result.hostname.split('.')
     if len(hostname_parts) < 2:  # Need at least domain.tld
@@ -42,7 +50,7 @@ def original_url_validator(url: str) -> bool:
 
     return True
 
-def check_if_url_already_in_db(url: str, base_pastinternet_url: str = "http://localhost:8000/redirect/") -> bool:
+def check_if_url_already_in_db(url: str, base_pastinternet_url: str = "http://localhost:5000/redirect/") -> bool:
     url = quote(url, safe='')
     check_url = f"{base_pastinternet_url}{url}"
     response = requests.head(check_url)
