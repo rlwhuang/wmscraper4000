@@ -27,18 +27,21 @@ def get_cdx_records(original_url: str, from_date: str = None, to_date: str = Non
 
     # convert the response to a list of dictionaries
     records = []
-    for line in response.text.strip().split("\n"):
-        parts = line.split(" ")
-        record = {
-            "urlkey": parts[0],
-            "timestamp": parts[1],
-            "original": parts[2],
-            "mimetype": parts[3],
-            "statuscode": parts[4],
-            "digest": parts[5],
-            "length": parts[6],
-        }
-        records.append(record)
+
+    # if the response is not empty, parse it
+    if response.text.strip():
+        for line in response.text.strip().split("\n"):
+            parts = line.split(" ")
+            record = {
+                "urlkey": parts[0],
+                "timestamp": parts[1],
+                "original": parts[2],
+                "mimetype": parts[3],
+                "statuscode": parts[4],
+                "digest": parts[5],
+                "length": parts[6],
+            }
+            records.append(record)
 
     print(f"Retrieved {len(records)} CDX records for {original_url}")
 
