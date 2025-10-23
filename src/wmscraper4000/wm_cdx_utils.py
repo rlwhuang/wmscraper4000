@@ -18,6 +18,7 @@ def get_cdx_records(original_url: str, from_date: str = None, to_date: str = Non
     # request the CDX records from the server
     time.sleep(sleep)  # be polite and avoid hammering the server
     print(f"Requesting CDX records for {original_url} with params: {params}")
+    print(f"Full URL: {base}?{requests.compat.urlencode(params)}")
     response = requests.get(base, params=params)
     if response.status_code == 403:
         print("Access forbidden due to the URL being excluded from the Wayback Machine.")
